@@ -42,13 +42,24 @@ def check_hub(allow_no_token: bool):
         )
         (warnings_ if allow_no_token else problems).append(msg)
         return
+    token = "".join(token.split())  # drop any space/newline pasted inside the token
+    if not token.isascii():
+        bad = sorted({ch for ch in token if ord(ch) > 127})
+        problems.append(
+            f"The Hugging Face token contains non-ASCII character(s) {bad}, so it is not a real token - this "
+            "is almost always a bad copy/paste. Copy the token again from "
+            "https://huggingface.co/settings/tokens (role: Write) and re-run the notebook's configuration cell."
+        )
+        return
+    if not token.startswith("hf_"):
+        warnings_.append("The Hugging Face token does not start with 'hf_' - double-check what you pasted.")
     try:
         from huggingface_hub import HfApi
 
         info = HfApi(token=token).whoami()
     except Exception as exc:  # noqa: BLE001
         problems.append(
-            f"The Hugging Face token was rejected ({type(exc).__name__}). Create a new token at "
+            f"The Hugging Face token was rejected ({type(exc).__name__}: {exc}). Create a new token at "
             "https://huggingface.co/settings/tokens with the 'Write' role and update the secret. "
             "Check there is no stray space or newline when pasting."
         )

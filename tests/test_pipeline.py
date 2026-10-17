@@ -180,3 +180,14 @@ def test_scripts_call_huggingface_with_valid_arguments(tmp_path, monkeypatch):
     hosting.main()
     assert api.upload_folder.called and api.restart_space.called
     assert json.loads((deploy / "space_config.json").read_text())["model_repo"] == config.MODEL_REPO
+
+
+def test_preflight_flags_non_ascii_token(monkeypatch):
+    import preflight
+
+    preflight.problems.clear()
+    preflight.warnings_.clear()
+    monkeypatch.setenv("HF_TOKEN", "hf_abcd\u2021efgh")
+    preflight.check_hub(allow_no_token=False)
+    assert any("non-ASCII" in p for p in preflight.problems)
+    preflight.problems.clear()

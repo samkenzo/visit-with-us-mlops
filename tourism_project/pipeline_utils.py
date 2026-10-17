@@ -14,7 +14,7 @@ def retry(fn, tries: int = 3, delay: float = 4.0, what: str = "operation"):
         except Exception as exc:  # noqa: BLE001
             last = exc
             status = getattr(getattr(exc, "response", None), "status_code", None)
-            if status in _NO_RETRY:
+            if status in _NO_RETRY or isinstance(exc, UnicodeError):  # a bad token will not fix itself
                 raise
             print(f"  {what} failed (attempt {attempt}/{tries}): {type(exc).__name__}: {exc}")
             if attempt < tries:
